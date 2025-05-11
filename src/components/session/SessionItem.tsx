@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Session } from '@/lib/types';
@@ -26,7 +27,7 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
         <SidebarMenuButton
           onClick={onSelect}
           isActive={isActive}
-          className="w-full justify-start text-left pr-8 h-11 py-2" // Changed pr-12 to pr-8
+          className="w-full justify-start text-left pr-10 h-11 py-2" // Increased pr to accommodate always visible icon
           tooltip={{
             children: (
               <>
@@ -46,14 +47,14 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
               {formatDistanceToNow(new Date(session.lastModified), { addSuffix: true })}
             </span>
           </div>
-           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0 ml-2" />} {/* Added ml-2 for spacing if loader is visible */}
+           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0 ml-2" />}
         </SidebarMenuButton>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-100 text-muted-foreground hover:text-destructive" // Always visible
               onClick={handleDelete}
               aria-label="Delete session"
             >
@@ -68,3 +69,4 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
     </TooltipProvider>
   );
 }
+
