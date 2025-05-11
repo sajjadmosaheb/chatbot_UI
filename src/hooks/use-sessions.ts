@@ -3,8 +3,10 @@
 
 import type { Session, Message } from '@/lib/types';
 import { summarizeSession } from '@/ai/flows/summarize-session';
+import { chat } from '@/ai/flows/chat-flow'; // Import the chat flow
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useCallback } from 'react';
+import { getTextDirection } from '@/lib/languageUtils'; // Import text direction utility
 
 const LOCAL_STORAGE_KEY = 'academix-sessions';
 const DEFAULT_TITLE = "New Chat";
@@ -21,29 +23,31 @@ export function useSessions() {
         const storedSessions = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedSessions) {
           const parsedSessions: Session[] = JSON.parse(storedSessions);
-          // Sort sessions by lastModified descending
           parsedSessions.sort((a, b) => b.lastModified - a.lastModified);
           setSessions(parsedSessions);
           if (parsedSessions.length > 0 && !activeSessionId) {
             setActiveSessionId(parsedSessions[0].id);
           }
-        } else {
-          // If no stored sessions, create a default one
-          createNewSession(false); // Don't setActive if already trying to load
         }
       } catch (error) {
         console.error("Failed to load sessions from localStorage:", error);
         toast({ title: "Error", description: "Could not load sessions.", variant: "destructive" });
-        createNewSession(false); 
       }
-      setIsInitialized(true);
+      setIsInitialized(true); // Set initialized here, after attempting to load or setting empty
     }
   }, []); // Empty dependency array: run once on mount
+
+  // Effect to create a new session if none exist after initialization
+  useEffect(() => {
+    if (isInitialized && sessions.length === 0) {
+      createNewSession();
+    }
+  }, [isInitialized, sessions.length]); // Added sessions.length to dependencies
+
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isInitialized && sessions.length > 0) {
       try {
-        // Sort sessions before saving to keep order consistent
         const sortedSessions = [...sessions].sort((a, b) => b.lastModified - a.lastModified);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sortedSessions));
       } catch (error) {
@@ -53,7 +57,7 @@ export function useSessions() {
     } else if (isInitialized && sessions.length === 0) {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
-  }, [sessions, isInitialized]);
+  }, [sessions, isInitialized, toast]);
 
   const createNewSession = useCallback((setActive = true) => {
     const newSessionId = crypto.randomUUID();
@@ -63,7 +67,7 @@ export function useSessions() {
       title: DEFAULT_TITLE,
       createdAt: now,
       lastModified: now,
-      messages: [], // New session starts with no messages
+      messages: [],
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a,b) => b.lastModified - a.lastModified));
     if (setActive) {
@@ -88,27 +92,27 @@ export function useSessions() {
       if (remainingSessions.length > 0) {
         setActiveSessionId(remainingSessions.sort((a,b) => b.lastModified - a.lastModified)[0].id);
       } else {
-        setActiveSessionId(null); // No sessions left
-        createNewSession(); // Create a new one if all are deleted
+        setActiveSessionId(null); 
+        createNewSession(); 
       }
     }
     toast({ title: "Session Deleted", description: "The session has been removed." });
   }, [activeSessionId, sessions, createNewSession, toast]);
 
   const addMessageToSession = useCallback(async (sessionId: string, text: string, sender: 'user' | 'bot') => {
-    const newMessage: Message = { id: crypto.randomUUID(), text, sender, timestamp: Date.now() };
+    const messageDirection = getTextDirection(text);
+    const newMessage: Message = { id: crypto.randomUUID(), text, sender, timestamp: Date.now(), direction: messageDirection };
     
     setSessions(prevSessions =>
       prevSessions.map(s =>
         s.id === sessionId
           ? { ...s, messages: [...s.messages, newMessage], lastModified: Date.now() }
           : s
-      ).sort((a, b) => b.lastModified - a.lastModified) // Re-sort after modification
+      ).sort((a, b) => b.lastModified - a.lastModified)
     );
 
     if (sender === 'user') {
-      // Simulate bot thinking and responding
-      const typingMessage: Message = { id: crypto.randomUUID(), text: "Academix is thinking...", sender: 'system', timestamp: Date.now() + 100 };
+      const typingMessage: Message = { id: crypto.randomUUID(), text: "Academix is thinking...", sender: 'system', timestamp: Date.now() + 100, direction: 'ltr' };
       setSessions(prevSessions =>
         prevSessions.map(s =>
           s.id === sessionId
@@ -117,30 +121,56 @@ export function useSessions() {
         )
       );
 
-      setTimeout(() => {
-        const botResponse: Message = {
+      try {
+        const currentSessionForHistory = sessions.find(s => s.id === sessionId);
+        const history = currentSessionForHistory?.messages
+            .filter(m => m.sender === 'user' || m.sender === 'bot')
+            .map(m => ({role: m.sender, content: m.text})) || [];
+        
+        const aiResponse = await chat({ message: text, history: history.slice(-10) }); // Limit history for context window
+        
+        const botResponseDirection = getTextDirection(aiResponse.response);
+        const botMessage: Message = {
           id: crypto.randomUUID(),
-          text: `I've received your message: "${text}". As a demo bot, I'm just echoing this back.`,
+          text: aiResponse.response,
           sender: 'bot',
           timestamp: Date.now(),
+          direction: botResponseDirection,
+        };
+
+        setSessions(prevSessions =>
+          prevSessions.map(s =>
+            s.id === sessionId
+              ? { ...s, messages: s.messages.filter(m => m.id !== typingMessage.id).concat(botMessage), lastModified: Date.now() }
+              : s
+          ).sort((a, b) => b.lastModified - a.lastModified)
+        );
+        
+        const updatedSession = sessions.find(s => s.id === sessionId);
+        if (updatedSession && updatedSession.messages.length >= 2 && updatedSession.title === DEFAULT_TITLE && !updatedSession.isGeneratingTitle) {
+          generateSessionTitle(sessionId);
+        }
+
+      } catch (error) {
+        console.error("AI chat error:", error);
+        const errorBotMessage: Message = {
+          id: crypto.randomUUID(),
+          text: "Sorry, I encountered an error. Please try again.",
+          sender: 'bot',
+          timestamp: Date.now(),
+          direction: 'ltr',
         };
         setSessions(prevSessions =>
           prevSessions.map(s =>
             s.id === sessionId
-              ? { ...s, messages: s.messages.filter(m => m.id !== typingMessage.id).concat(botResponse) }
+              ? { ...s, messages: s.messages.filter(m => m.id !== typingMessage.id).concat(errorBotMessage), lastModified: Date.now() }
               : s
-          )
+          ).sort((a, b) => b.lastModified - a.lastModified)
         );
-
-        // Check for title generation after bot response
-        const currentSession = sessions.find(s => s.id === sessionId);
-         // Ensure session is still available (might have been deleted rapidly)
-        if (currentSession && currentSession.messages.length >= 2 && currentSession.title === DEFAULT_TITLE && !currentSession.isGeneratingTitle) { // Adjusted to 2 messages (1 user, 1 bot)
-          generateSessionTitle(sessionId);
-        }
-      }, 1500);
+        toast({ title: "AI Error", description: "Failed to get response from AI.", variant: "destructive" });
+      }
     }
-  }, [sessions]); // Added sessions to dependency array for currentSession access.
+  }, [sessions, toast]); // Added sessions and toast to dependency array
 
   const generateSessionTitle = useCallback(async (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
@@ -149,11 +179,11 @@ export function useSessions() {
     setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, isGeneratingTitle: true } : s));
 
     const transcript = session.messages
-      .filter(m => m.sender === 'user' || m.sender === 'bot') // Only user and bot messages for summary
+      .filter(m => m.sender === 'user' || m.sender === 'bot')
       .map(m => `${m.sender}: ${m.text}`)
       .join('\n');
 
-    if (transcript.length < 20) { // Avoid calling AI for very short conversations
+    if (transcript.length < 10) { 
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, isGeneratingTitle: false } : s));
         return;
     }
@@ -165,7 +195,7 @@ export function useSessions() {
           s.id === sessionId ? { ...s, title: summary.title, isGeneratingTitle: false } : s
         )
       );
-      toast({ title: "Title Generated", description: `Session title updated to "${summary.title}".` });
+      // toast({ title: "Title Generated", description: `Session title updated to "${summary.title}".` });
     } catch (error) {
       console.error("Failed to generate session title:", error);
       toast({ title: "Error", description: "Could not generate session title.", variant: "destructive" });

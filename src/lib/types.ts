@@ -3,6 +3,7 @@ export interface Message {
   text: string;
   sender: 'user' | 'bot' | 'system'; // 'system' for typing indicators or initial messages
   timestamp: number;
+  direction?: 'rtl' | 'ltr'; // Added for text direction
 }
 
 export interface Session {
@@ -13,3 +14,4 @@ export interface Session {
   messages: Message[];
   isGeneratingTitle?: boolean; // Optional flag for UI indication
 }
+
