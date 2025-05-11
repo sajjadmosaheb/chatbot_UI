@@ -9,13 +9,13 @@ import {
   SidebarContent, 
   SidebarMenu, 
   SidebarMenuItem,
-  SidebarTrigger
+  SidebarTrigger // Imported SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react'; 
 
 interface SessionHistoryPanelProps {
   sessions: Session[];
@@ -36,9 +36,20 @@ export function SessionHistoryPanel({
 }: SessionHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredSessions = sessions.filter(session =>
-    session.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSessions = searchTerm.trim() === '' 
+    ? sessions 
+    : sessions.filter(session => {
+        const searchTermLower = searchTerm.toLowerCase();
+        // Check title
+        if (session.title.toLowerCase().includes(searchTermLower)) {
+          return true;
+        }
+        // Check message content
+        if (session.messages.some(message => message.text.toLowerCase().includes(searchTermLower))) {
+          return true;
+        }
+        return false;
+      });
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
@@ -49,13 +60,14 @@ export function SessionHistoryPanel({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 group-data-[collapsible=icon]:hidden text-sidebar-foreground hover:text-sidebar-accent-foreground"
+              className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" // Create button hidden when sidebar is icon-only
               onClick={onCreateNewSession}
               aria-label="New Conversation"
             >
               <PlusCircle className="h-5 w-5" />
             </Button>
-             <SidebarTrigger className="h-8 w-8 md:hidden text-sidebar-foreground hover:text-sidebar-accent-foreground" /> {/* Mobile toggle */}
+             {/* SidebarTrigger always visible for manual toggle */}
+            <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
           </div>
         </div>
         <div className="relative group-data-[collapsible=icon]:hidden w-full">
@@ -88,8 +100,6 @@ export function SessionHistoryPanel({
                   isActive={session.id === activeSessionId}
                   onSelect={() => {
                     onSelectSession(session.id);
-                    // Optionally clear search on selection
-                    // setSearchTerm(''); 
                   }}
                   onDelete={() => onDeleteSession(session.id)}
                 />

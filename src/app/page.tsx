@@ -40,7 +40,7 @@ export default function AcademixPage() {
 
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}> {/* Sidebar initially hidden/collapsed */}
       <div className="flex h-screen w-full">
         <SessionHistoryPanel
           sessions={sessions}
