@@ -63,11 +63,9 @@ export function useSessions() {
       title: DEFAULT_TITLE,
       createdAt: now,
       lastModified: now,
-      messages: [
-        { id: crypto.randomUUID(), text: "Hello! How can I help you today?", sender: 'bot', timestamp: now }
-      ],
+      messages: [], // New session starts with no messages
     };
-    setSessions(prevSessions => [newSession, ...prevSessions]);
+    setSessions(prevSessions => [newSession, ...prevSessions].sort((a,b) => b.lastModified - a.lastModified));
     if (setActive) {
       setActiveSessionId(newSessionId);
     }
@@ -136,6 +134,7 @@ export function useSessions() {
 
         // Check for title generation after bot response
         const currentSession = sessions.find(s => s.id === sessionId);
+         // Ensure session is still available (might have been deleted rapidly)
         if (currentSession && currentSession.messages.length >= 2 && currentSession.title === DEFAULT_TITLE && !currentSession.isGeneratingTitle) { // Adjusted to 2 messages (1 user, 1 bot)
           generateSessionTitle(sessionId);
         }

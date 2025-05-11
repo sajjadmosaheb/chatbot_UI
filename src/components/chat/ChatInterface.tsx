@@ -17,7 +17,7 @@ import { ExamplePromptsGrid } from './ExamplePromptsGrid';
 interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (text: string) => void;
-  currentSessionTitle: string; // Kept for potential future use, but not displayed
+  currentSessionTitle: string; 
   isLoading: boolean; 
 }
 
@@ -50,8 +50,8 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
     // setInputValue('');
   };
 
-  // Show special greeting and example prompts if not loading, it's the initial bot message, and no user messages yet.
-  const isNewChatScreen = !isLoading && messages.length === 1 && messages[0].sender === 'bot' && messages[0].text === "Hello! How can I help you today?";
+  // Show initial greeting and example prompts if not loading and there are no messages.
+  const isNewChatScreen = !isLoading && messages.length === 0;
 
   return (
     <div className="flex flex-col h-full bg-background relative">
@@ -76,12 +76,9 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
       ) : (
         <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
           <div className={cn("space-y-4", messages.length > 0 ? "pb-[calc(4.5rem+1rem)]" : "pb-4")}> {/* Add padding-bottom for input area */}
-            {isLoading && !isNewChatScreen && <p className="text-center text-muted-foreground">Loading chat...</p>}
+            {isLoading && <p className="text-center text-muted-foreground">Loading chat...</p>}
             {!isLoading && messages.map((msg) => (
-              // Do not render the initial "Hello! How can I help you today?" message if we are showing the new chat screen
-              (isNewChatScreen && msg.text === "Hello! How can I help you today!" && msg.sender === "bot") 
-              ? null 
-              : <MessageBubble key={msg.id} message={msg} />
+               <MessageBubble key={msg.id} message={msg} />
             ))}
           </div>
         </ScrollArea>
