@@ -77,7 +77,7 @@ export function SessionHistoryPanel({
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" 
+                    className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" 
                     onClick={onCreateNewSession}
                     aria-label="New Conversation"
                   >
