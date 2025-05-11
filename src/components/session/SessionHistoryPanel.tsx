@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Session } from '@/lib/types';
@@ -11,8 +12,10 @@ import {
   SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useState } from 'react'; // Import useState
 
 interface SessionHistoryPanelProps {
   sessions: Session[];
@@ -31,21 +34,39 @@ export function SessionHistoryPanel({
   onDeleteSession,
   isInitialized
 }: SessionHistoryPanelProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredSessions = sessions.filter(session =>
+    session.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
-      <SidebarHeader className="flex items-center justify-between p-3 border-b border-sidebar-border">
-        <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 group-data-[collapsible=icon]:hidden"
-            onClick={onCreateNewSession}
-            aria-label="New Conversation"
-          >
-            <PlusCircle className="h-5 w-5" />
-          </Button>
-           <SidebarTrigger className="h-8 w-8 md:hidden" /> {/* Mobile toggle */}
+      <SidebarHeader className="flex flex-col p-3 border-b border-sidebar-border">
+        <div className="flex items-center justify-between w-full mb-2">
+          <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 group-data-[collapsible=icon]:hidden text-sidebar-foreground hover:text-sidebar-accent-foreground"
+              onClick={onCreateNewSession}
+              aria-label="New Conversation"
+            >
+              <PlusCircle className="h-5 w-5" />
+            </Button>
+             <SidebarTrigger className="h-8 w-8 md:hidden text-sidebar-foreground hover:text-sidebar-accent-foreground" /> {/* Mobile toggle */}
+          </div>
+        </div>
+        <div className="relative group-data-[collapsible=icon]:hidden w-full">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search chats..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 h-8 bg-sidebar-accent/50 border-sidebar-border focus:bg-sidebar-accent text-sidebar-foreground placeholder:text-muted-foreground rounded-md"
+          />
         </div>
       </SidebarHeader>
       <SidebarContent className="p-0">
@@ -57,12 +78,19 @@ export function SessionHistoryPanel({
             {isInitialized && sessions.length === 0 && (
               <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions yet. Start a new chat!</SidebarMenuItem>
             )}
-            {isInitialized && sessions.map((session) => (
+             {isInitialized && sessions.length > 0 && filteredSessions.length === 0 && searchTerm && (
+              <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions match your search.</SidebarMenuItem>
+            )}
+            {isInitialized && filteredSessions.map((session) => (
               <SidebarMenuItem key={session.id}>
                 <SessionItem
                   session={session}
                   isActive={session.id === activeSessionId}
-                  onSelect={() => onSelectSession(session.id)}
+                  onSelect={() => {
+                    onSelectSession(session.id);
+                    // Optionally clear search on selection
+                    // setSearchTerm(''); 
+                  }}
                   onDelete={() => onDeleteSession(session.id)}
                 />
               </SidebarMenuItem>
@@ -70,9 +98,6 @@ export function SessionHistoryPanel({
           </SidebarMenu>
         </ScrollArea>
       </SidebarContent>
-      {/* <SidebarFooter className="p-2 border-t border-sidebar-border">
-         Can add settings or other actions here 
-      </SidebarFooter> */}
     </Sidebar>
   );
 }
