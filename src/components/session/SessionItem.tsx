@@ -27,7 +27,7 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
         <SidebarMenuButton
           onClick={onSelect}
           isActive={isActive}
-          className="w-full justify-start text-left pr-10 h-auto py-2" // Adjusted padding and height
+          className="w-full justify-start text-left pr-10 h-11 py-2" // Changed h-auto to h-11 for fixed height
           tooltip={{
             children: (
               <>
