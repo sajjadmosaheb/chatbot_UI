@@ -6,9 +6,9 @@ import { MessageBubble } from './MessageBubble';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, PanelLeft, Paperclip } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react'; // Removed PanelLeft
 import React, { useState, useRef, useEffect } from 'react';
-import { useSidebar } from '@/components/ui/sidebar'; 
+// Removed useSidebar import as it's no longer directly used here for toggle button
 import { cn } from '@/lib/utils';
 import { InitialGreeting } from './InitialGreeting';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -25,7 +25,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ messages, onSendMessage, currentSessionTitle, isLoading }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { toggleSidebar, isMobile, openMobile: isSidebarOpenMobile, state: sidebarState } = useSidebar();
+  // Removed sidebar state variables as the toggle button is removed from here
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -52,29 +52,11 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
   // Show initial greeting and example prompts if not loading and there are no messages.
   const isNewChatScreen = !isLoading && messages.length === 0;
 
-  const getSidebarTooltipText = () => {
-    if (isMobile) {
-      return isSidebarOpenMobile ? "Close sidebar" : "Open sidebar";
-    }
-    return sidebarState === 'expanded' ? "Close sidebar" : "Open sidebar";
-  };
-
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full bg-background relative">
-        <header className="p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10 h-16">
-          <div className="flex items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
-                  <PanelLeft className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{getSidebarTooltipText()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+        <header className="p-4 border-b flex items-center justify-end sticky top-0 bg-background z-10 h-16"> 
+          {/* Removed the div containing the PanelLeft button */}
           <ThemeToggle />
         </header>
 
