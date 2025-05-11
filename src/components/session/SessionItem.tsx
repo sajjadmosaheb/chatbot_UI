@@ -1,8 +1,10 @@
+
 import type { Session } from '@/lib/types';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SessionItemProps {
   session: Session;
@@ -44,15 +46,22 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
         </div>
          {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin ml-auto text-muted-foreground" />}
       </SidebarMenuButton>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
-        onClick={handleDelete}
-        aria-label="Delete session"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            onClick={handleDelete}
+            aria-label="Delete session"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">
+          <p>Remove session</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

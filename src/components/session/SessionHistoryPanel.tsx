@@ -9,7 +9,8 @@ import {
   SidebarContent, 
   SidebarMenu, 
   SidebarMenuItem,
-  SidebarTrigger // Imported SidebarTrigger
+  SidebarTrigger, // Imported SidebarTrigger
+  useSidebar // Imported useSidebar hook
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { PlusCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState } from 'react'; 
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SessionHistoryPanelProps {
   sessions: Session[];
@@ -36,6 +38,7 @@ export function SessionHistoryPanel({
   isInitialized
 }: SessionHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const { state: sidebarState, isMobile } = useSidebar();
 
   const filteredSessions = searchTerm.trim() === '' 
     ? sessions 
@@ -58,17 +61,30 @@ export function SessionHistoryPanel({
         <div className="flex items-center justify-between w-full mb-2">
           <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" // Create button hidden when sidebar is icon-only
-              onClick={onCreateNewSession}
-              aria-label="New Conversation"
-            >
-              <PlusCircle className="h-5 w-5" />
-            </Button>
-             {/* SidebarTrigger always visible for manual toggle */}
-            <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" 
+                  onClick={onCreateNewSession}
+                  aria-label="New Conversation"
+                >
+                  <PlusCircle className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center">
+                <p>New Conversation</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
+              </TooltipTrigger>
+              <TooltipContent side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
+                 <p>{sidebarState === 'expanded' ? "Close sidebar" : "Open sidebar"}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
         <div className="relative group-data-[collapsible=icon]:hidden w-full">

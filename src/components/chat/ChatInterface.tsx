@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { InitialGreeting } from './InitialGreeting';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ExamplePromptsGrid } from './ExamplePromptsGrid';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -24,7 +25,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ messages, onSendMessage, currentSessionTitle, isLoading }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { toggleSidebar, isMobile, openMobile: isSidebarOpenMobile } = useSidebar();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -56,9 +57,16 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
       <header className="p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10 h-16">
         <div className="flex items-center">
           {isMobile && ( 
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
-              <PanelLeft className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
+                  <PanelLeft className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{isSidebarOpenMobile ? "Close sidebar" : "Open sidebar"}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
            {/* Placeholder for potential future elements or to balance the ThemeToggle */}
           <div className="w-8 h-8 md:w-0 md:h-0"></div>
@@ -88,16 +96,23 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
       )}>
         <form onSubmit={handleSendMessage} className="w-full">
           <div className="relative flex items-center gap-2">
-             <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={isLoading}
-                aria-label="Attach file"
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary z-10 p-1"
-              >
-                <Paperclip className="h-5 w-5" />
-              </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={isLoading}
+                  aria-label="Attach file"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary z-10 p-1"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Add file or photo</p>
+              </TooltipContent>
+            </Tooltip>
             <Input
               type="text"
               placeholder="Ask Academix..."
@@ -106,19 +121,25 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
               className="flex-grow bg-card border-input focus:ring-primary rounded-full py-3 pl-12 pr-12 text-base" 
               disabled={isLoading}
             />
-            <Button
-              type="submit"
-              size="icon"
-              className="bg-primary hover:bg-primary/90 rounded-full text-primary-foreground absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" 
-              disabled={isLoading || !inputValue.trim()}
-              aria-label="Send message"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="bg-primary hover:bg-primary/90 rounded-full text-primary-foreground absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" 
+                  disabled={isLoading || !inputValue.trim()}
+                  aria-label="Send message"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Send message</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </form>
       </div>
     </div>
   );
 }
-

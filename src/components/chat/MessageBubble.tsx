@@ -1,10 +1,12 @@
+
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, Copy } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import React, { useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MessageBubbleProps {
   message: Message;
@@ -13,6 +15,7 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const { toast } = useToast();
   const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
 
   const handleCopy = (textToCopy: string, type: 'message' | 'code' = 'message') => {
     navigator.clipboard.writeText(textToCopy)
@@ -24,6 +27,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         console.error('Failed to copy text: ', err);
       });
   };
+
+  const handleLike = () => {
+    setLiked(!liked);
+    if (disliked && !liked) setDisliked(false); // If liked, remove dislike
+  }
+
+  const handleDislike = () => {
+    setDisliked(!disliked);
+    if (liked && !disliked) setLiked(false); // If disliked, remove like
+  }
 
   const isUser = message.sender === 'user';
   const isBot = message.sender === 'bot';
@@ -64,9 +77,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <div className="my-2 p-3 border border-dashed border-border rounded-lg bg-card shadow-sm text-card-foreground">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs font-semibold text-muted-foreground">Code Snippet</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(codeContent, 'code')} aria-label="Copy code">
-              <Copy className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(codeContent, 'code')} aria-label="Copy code">
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Copy code</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
           <pre className="text-sm whitespace-pre-wrap bg-transparent p-0 overflow-x-auto">
             <code className="font-mono">{codeContent}</code>
@@ -84,9 +104,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             <div key={index} className="my-2 p-3 border border-dashed border-border rounded-lg bg-card shadow-sm text-card-foreground">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-semibold text-muted-foreground">Code Snippet</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(codeContent, 'code')} aria-label="Copy code">
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(codeContent, 'code')} aria-label="Copy code">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Copy code</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <pre className="text-sm whitespace-pre-wrap bg-transparent p-0 overflow-x-auto">
                 <code className="font-mono">{codeContent}</code>
@@ -116,13 +143,39 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const ActionButtons = ({ isUserMsg }: { isUserMsg: boolean }) => (
     <div className={cn("flex items-center space-x-1 opacity-100 group-hover:opacity-100 transition-opacity duration-150", isUserMsg ? "ml-2" : "mr-2")}>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(message.text)} aria-label="Copy message">
-        <Copy className={cn("h-4 w-4", isUserMsg ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground hover:text-foreground")} />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(message.text)} aria-label="Copy message">
+            <Copy className={cn("h-4 w-4", isUserMsg ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground hover:text-foreground")} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>Copy message</p>
+        </TooltipContent>
+      </Tooltip>
       {!isUserMsg && (
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setLiked(!liked)} aria-label="Like message">
-          <ThumbsUp className={cn("h-4 w-4", liked ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary")} />
-        </Button>
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleLike} aria-label="Like message">
+                <ThumbsUp className={cn("h-4 w-4", liked ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Good response</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDislike} aria-label="Dislike message">
+                <ThumbsDown className={cn("h-4 w-4", disliked ? "text-destructive fill-destructive" : "text-muted-foreground hover:text-destructive")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Bad response</p>
+            </TooltipContent>
+          </Tooltip>
+        </>
       )}
     </div>
   );
