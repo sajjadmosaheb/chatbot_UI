@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState } from 'react'; 
+import { cn } from '@/lib/utils';
 
 interface SessionHistoryPanelProps {
   sessions: Session[];
@@ -82,7 +83,7 @@ export function SessionHistoryPanel({
         </div>
       </SidebarHeader>
       <SidebarContent className="p-0">
-        <ScrollArea className="h-full">
+        <ScrollArea className={cn("h-full", "group-data-[collapsible=icon]:hidden")}>
           <SidebarMenu className="p-2">
             {!isInitialized && (
                 <SidebarMenuItem className="p-2 text-sm text-muted-foreground">Loading sessions...</SidebarMenuItem>
