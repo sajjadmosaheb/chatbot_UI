@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, PanelLeft } from 'lucide-react'; // Added PanelLeft for explicit use if needed, though SidebarTrigger handles it
+import { PlusCircle, Search, PanelLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState } from 'react'; 
 import { cn } from '@/lib/utils';
@@ -38,7 +38,7 @@ export function SessionHistoryPanel({
   isInitialized
 }: SessionHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { state: sidebarState, isMobile, openMobile: isSidebarOpenMobile, toggleSidebar } = useSidebar();
+  const { state: sidebarState, isMobile, openMobile: isSidebarOpenMobile } = useSidebar();
 
   const filteredSessions = searchTerm.trim() === '' 
     ? sessions 
@@ -72,17 +72,16 @@ export function SessionHistoryPanel({
           <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mb-0 mb-2">
             <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
             {/* Icon container */}
-            <div className="flex items-center group-data-[collapsible=icon]:gap-0 gap-1">
+            <div className="flex items-center group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-0 gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)/2)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:text-sidebar-accent-foreground"
+                    className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:bg-sidebar-accent-foreground"
                     onClick={onCreateNewSession}
                     aria-label={getNewConversationTooltipText()}
                   >
-                    {/* SVG icon size is managed by Button's default [&_svg] styles or explicit sizing here */}
                     <PlusCircle className="h-5 w-5 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -92,9 +91,7 @@ export function SessionHistoryPanel({
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {/* SidebarTrigger is a Button, so it can also take these classes */}
-                  {/* The PanelLeft icon inside SidebarTrigger will respect Button's SVG sizing rules */}
-                  <SidebarTrigger className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)/2)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:text-sidebar-accent-foreground" />
+                  <SidebarTrigger className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:bg-sidebar-accent-foreground" />
                 </TooltipTrigger>
                 <TooltipContent sideOffset={10} side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
                    <p>{getSidebarToggleTooltipText()}</p>
@@ -117,34 +114,35 @@ export function SessionHistoryPanel({
         </SidebarHeader>
         <SidebarContent className="p-0">
           <ScrollArea className={cn("h-full", "group-data-[collapsible=icon]:hidden")}>
-            <SidebarMenu className="p-2">
-              {!isInitialized && (
-                  <SidebarMenuItem className="p-2 text-sm text-muted-foreground">Loading sessions...</SidebarMenuItem>
-              )}
-              {isInitialized && sessions.length === 0 && (
-                <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions yet. Start a new chat!</SidebarMenuItem>
-              )}
-               {isInitialized && sessions.length > 0 && filteredSessions.length === 0 && searchTerm && (
-                <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions match your search.</SidebarMenuItem>
-              )}
-              {isInitialized && filteredSessions.map((session) => (
-                <SidebarMenuItem key={session.id}>
-                  <SessionItem
-                    session={session}
-                    isActive={session.id === activeSessionId}
-                    onSelect={() => {
-                      onSelectSession(session.id);
-                    }}
-                    onDelete={() => onDeleteSession(session.id)}
-                  />
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <div className="p-2"> {/* Wrapper for padding */}
+              <SidebarMenu> {/* Removed p-2 from here */}
+                {!isInitialized && (
+                    <SidebarMenuItem className="p-2 text-sm text-muted-foreground">Loading sessions...</SidebarMenuItem>
+                )}
+                {isInitialized && sessions.length === 0 && (
+                  <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions yet. Start a new chat!</SidebarMenuItem>
+                )}
+                 {isInitialized && sessions.length > 0 && filteredSessions.length === 0 && searchTerm && (
+                  <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions match your search.</SidebarMenuItem>
+                )}
+                {isInitialized && filteredSessions.map((session) => (
+                  <SidebarMenuItem key={session.id}>
+                    <SessionItem
+                      session={session}
+                      isActive={session.id === activeSessionId}
+                      onSelect={() => {
+                        onSelectSession(session.id);
+                      }}
+                      onDelete={() => onDeleteSession(session.id)}
+                    />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </div>
           </ScrollArea>
-           {/* Collapsed state icon-only menu items (optional, if needed for other actions) */}
+           {/* Collapsed state icon-only menu items */}
            <SidebarMenu className={cn("p-2", "hidden group-data-[collapsible=icon]:flex flex-col items-center")}>
-            {/* Example of how other icons could be shown when collapsed, if SidebarContent were to show them */}
-            {/* This is not strictly required by the current user request but shows how it could be structured */}
+            {/* Icons for collapsed view will be handled by SessionItem's tooltip prop */}
            </SidebarMenu>
         </SidebarContent>
       </Sidebar>
