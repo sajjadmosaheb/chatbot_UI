@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Session } from '@/lib/types';
@@ -26,7 +27,7 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
         <SidebarMenuButton
           onClick={onSelect}
           isActive={isActive}
-          className="w-full justify-start text-left pr-10 h-11 py-2" 
+          className="w-full justify-start text-left pr-12 h-11 py-2" // Increased pr-10 to pr-12
           tooltip={{
             children: (
               <>
@@ -68,3 +69,4 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
     </TooltipProvider>
   );
 }
+
