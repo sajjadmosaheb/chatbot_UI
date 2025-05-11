@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Session } from '@/lib/types';
@@ -23,11 +22,11 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
 
   return (
     <TooltipProvider>
-      <div className="relative group">
+      <div className="relative group w-full">
         <SidebarMenuButton
           onClick={onSelect}
           isActive={isActive}
-          className="w-full justify-start text-left pr-12 h-11 py-2" // Increased pr-10 to pr-12
+          className="w-full justify-start text-left pr-8 h-11 py-2" // Changed pr-12 to pr-8
           tooltip={{
             children: (
               <>
@@ -47,7 +46,7 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
               {formatDistanceToNow(new Date(session.lastModified), { addSuffix: true })}
             </span>
           </div>
-           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />}
+           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0 ml-2" />} {/* Added ml-2 for spacing if loader is visible */}
         </SidebarMenuButton>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -69,4 +68,3 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
     </TooltipProvider>
   );
 }
-
