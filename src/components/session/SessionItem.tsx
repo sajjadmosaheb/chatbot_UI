@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Session } from '@/lib/types';
@@ -27,7 +26,7 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
         <SidebarMenuButton
           onClick={onSelect}
           isActive={isActive}
-          className="w-full justify-start text-left pr-10 h-11 py-2" // Changed h-auto to h-11 for fixed height
+          className="w-full justify-start text-left pr-10 h-11 py-2" 
           tooltip={{
             children: (
               <>
@@ -41,13 +40,13 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
             align: "center",
           }}
         >
-          <div className="flex flex-col overflow-hidden w-full"> {/* Ensure full width for content */}
+          <div className="flex-grow min-w-0 flex flex-col overflow-hidden"> {/* Ensures text truncates correctly */}
             <span className="truncate font-medium text-sm">{session.title}</span>
             <span className="text-xs text-muted-foreground truncate">
               {formatDistanceToNow(new Date(session.lastModified), { addSuffix: true })}
             </span>
           </div>
-           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin ml-auto text-muted-foreground" />}
+           {session.isGeneratingTitle && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />}
         </SidebarMenuButton>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -69,4 +68,3 @@ export function SessionItem({ session, isActive, onSelect, onDelete }: SessionIt
     </TooltipProvider>
   );
 }
-
