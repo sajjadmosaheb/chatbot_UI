@@ -1,7 +1,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { spawn } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import path from 'path';
 
 export async function POST(req: NextRequest) {
@@ -12,31 +12,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
     }
 
-    // Resolve the path to the Python script relative to the project root
     const scriptPath = path.join(process.cwd(), 'chatbot.py');
+    const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python3'; 
 
-    // Use a Promise to handle the asynchronous nature of spawn
     const pythonResponse = await new Promise<{ type: 'success', data: string } | { type: 'error', data: string }>((resolve) => {
-      // Try 'python3' first, then 'python' as a fallback if needed, or configure based on deployment env
-      const pythonExecutable = 'python3'; 
       
-      const pythonProcess = spawn(pythonExecutable, [scriptPath, prompt], {
+      const pythonProcess: ChildProcess = spawn(pythonExecutable, [scriptPath, prompt], {
         env: {
-          ...process.env, // Pass existing environment variables
-          OPENAI_API_KEY: process.env.OPENAI_API_KEY, // Explicitly pass the API key
-          PYTHONUNBUFFERED: "1" // Ensures direct output, might help with pipes
+          ...process.env, 
+          OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+          PYTHONUNBUFFERED: "1" 
         },
-        // stdio: ['pipe', 'pipe', 'pipe'] // Explicitly set stdio
       });
 
       let responseData = '';
       let errorData = '';
 
-      pythonProcess.stdout.on('data', (data) => {
+      pythonProcess.stdout?.on('data', (data) => {
         responseData += data.toString();
       });
 
-      pythonProcess.stderr.on('data', (data) => {
+      pythonProcess.stderr?.on('data', (data) => {
         errorData += data.toString();
       });
 
@@ -44,14 +40,16 @@ export async function POST(req: NextRequest) {
         if (code === 0 && responseData) {
           resolve({ type: 'success', data: responseData.trim() });
         } else {
-          // Prioritize errorData if available, otherwise use responseData or a generic message
           const message = errorData || responseData || `Python script exited with code ${code}.`;
+          console.error(`Python script error (executable: ${pythonExecutable}): ${message}`);
           resolve({ type: 'error', data: message.trim() });
         }
       });
 
-      pythonProcess.on('error', (err) => { // Handle spawn errors (e.g., python3 not found)
-        resolve({ type: 'error', data: `Failed to start Python process with ${pythonExecutable}: ${err.message}. Make sure Python is installed and in PATH.` });
+      pythonProcess.on('error', (err: NodeJS.ErrnoException) => { 
+        const errorMessage = `Failed to start Python process with ${pythonExecutable}: ${err.message}. Make sure Python 3 is installed and ${pythonExecutable} is in your system PATH. You can also set the PYTHON_EXECUTABLE environment variable.`;
+        console.error(errorMessage, err);
+        resolve({ type: 'error', data: errorMessage });
       });
     });
 
@@ -61,7 +59,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: pythonResponse.data }, { status: 500 });
     }
 
-  } catch (error: any) { // Catch errors from req.json() or other unexpected errors
+  } catch (error: any) { 
+    console.error("API route error:", error);
     return NextResponse.json({ error: error.message || 'An unexpected server error occurred.' }, { status: 500 });
   }
 }
+
