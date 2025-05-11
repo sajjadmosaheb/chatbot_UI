@@ -1,4 +1,6 @@
 
+"use client";
+
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -6,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import React, { useState } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface MessageBubbleProps {
   message: Message;
@@ -84,7 +86,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Copy code</p>
+                <p>Copy</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -111,7 +113,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>Copy code</p>
+                    <p>Copy</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -150,7 +152,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top">
-          <p>Copy message</p>
+          <p>Copy</p>
         </TooltipContent>
       </Tooltip>
       {!isUserMsg && (
@@ -181,30 +183,33 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   );
 
   return (
-    <div className={cn('flex flex-col my-2 group', isUser ? 'items-end' : 'items-start')}>
-      <div
-        className={cn(
-          'max-w-[75%] p-3', 
-          isUser 
-            ? 'bg-primary text-primary-foreground shadow-md rounded-xl rounded-br-none' 
-            : 'bg-transparent text-foreground shadow-none' // Bot messages have no frame/bubble
-        )}
-      >
-        {renderMessageText(message.text)}
-      </div>
-      <div className={cn(
-          "flex items-center mt-1",
-          isUser ? "justify-end" : "justify-start w-full max-w-[75%]" 
-        )}>
-          {isBot && <ActionButtons isUserMsg={false} />}
-          <p className={cn(
-            "text-xs",
-            isUser ? "text-muted-foreground mr-2" : "text-muted-foreground"
-          )}>
-            {format(new Date(message.timestamp), 'p')}
-          </p>
-          {isUser && <ActionButtons isUserMsg={true} />}
+    <TooltipProvider>
+      <div className={cn('flex flex-col my-2 group', isUser ? 'items-end' : 'items-start')}>
+        <div
+          className={cn(
+            'max-w-[75%] p-3', 
+            isUser 
+              ? 'bg-primary text-primary-foreground shadow-md rounded-xl rounded-br-none' 
+              : 'bg-transparent text-foreground shadow-none' // Bot messages have no frame/bubble
+          )}
+        >
+          {renderMessageText(message.text)}
         </div>
-    </div>
+        <div className={cn(
+            "flex items-center mt-1",
+            isUser ? "justify-end" : "justify-start w-full max-w-[75%]" 
+          )}>
+            {isBot && <ActionButtons isUserMsg={false} />}
+            <p className={cn(
+              "text-xs",
+              isUser ? "text-muted-foreground mr-2" : "text-muted-foreground"
+            )}>
+              {format(new Date(message.timestamp), 'p')}
+            </p>
+            {isUser && <ActionButtons isUserMsg={true} />}
+          </div>
+      </div>
+    </TooltipProvider>
   );
 }
+

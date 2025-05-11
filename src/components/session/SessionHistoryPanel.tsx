@@ -9,8 +9,8 @@ import {
   SidebarContent, 
   SidebarMenu, 
   SidebarMenuItem,
-  SidebarTrigger, // Imported SidebarTrigger
-  useSidebar // Imported useSidebar hook
+  SidebarTrigger, 
+  useSidebar 
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ import { PlusCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState } from 'react'; 
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface SessionHistoryPanelProps {
   sessions: Session[];
@@ -38,7 +38,7 @@ export function SessionHistoryPanel({
   isInitialized
 }: SessionHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { state: sidebarState, isMobile } = useSidebar();
+  const { state: sidebarState, isMobile, openMobile: isSidebarOpenMobile } = useSidebar();
 
   const filteredSessions = searchTerm.trim() === '' 
     ? sessions 
@@ -55,76 +55,90 @@ export function SessionHistoryPanel({
         return false;
       });
 
+  const getSidebarToggleTooltipText = () => {
+    if (isMobile) {
+      return isSidebarOpenMobile ? "Close sidebar" : "Open sidebar";
+    }
+    return sidebarState === 'expanded' ? "Close sidebar" : "Open sidebar";
+  };
+  
+  const getNewConversationTooltipText = () => "New Conversation";
+
+
   return (
-    <Sidebar side="left" variant="sidebar" collapsible="icon">
-      <SidebarHeader className="flex flex-col p-3 border-b border-sidebar-border">
-        <div className="flex items-center justify-between w-full mb-2">
-          <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" 
-                  onClick={onCreateNewSession}
-                  aria-label="New Conversation"
-                >
-                  <PlusCircle className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" align="center">
-                <p>New Conversation</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
-              </TooltipTrigger>
-              <TooltipContent side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
-                 <p>{sidebarState === 'expanded' ? "Close sidebar" : "Open sidebar"}</p>
-              </TooltipContent>
-            </Tooltip>
+    <TooltipProvider>
+      <Sidebar side="left" variant="sidebar" collapsible="icon">
+        <SidebarHeader className="flex flex-col p-3 border-b border-sidebar-border">
+          <div className="flex items-center justify-between w-full mb-2">
+            <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden" 
+                    onClick={onCreateNewSession}
+                    aria-label="New Conversation"
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  <p>{getNewConversationTooltipText()}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
+                </TooltipTrigger>
+                <TooltipContent side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
+                   <p>{getSidebarToggleTooltipText()}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </div>
-        <div className="relative group-data-[collapsible=icon]:hidden w-full">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search chats..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 h-8 bg-sidebar-accent/50 border-sidebar-border focus:bg-sidebar-accent text-sidebar-foreground placeholder:text-muted-foreground rounded-md"
-          />
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="p-0">
-        <ScrollArea className={cn("h-full", "group-data-[collapsible=icon]:hidden")}>
-          <SidebarMenu className="p-2">
-            {!isInitialized && (
-                <SidebarMenuItem className="p-2 text-sm text-muted-foreground">Loading sessions...</SidebarMenuItem>
-            )}
-            {isInitialized && sessions.length === 0 && (
-              <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions yet. Start a new chat!</SidebarMenuItem>
-            )}
-             {isInitialized && sessions.length > 0 && filteredSessions.length === 0 && searchTerm && (
-              <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions match your search.</SidebarMenuItem>
-            )}
-            {isInitialized && filteredSessions.map((session) => (
-              <SidebarMenuItem key={session.id}>
-                <SessionItem
-                  session={session}
-                  isActive={session.id === activeSessionId}
-                  onSelect={() => {
-                    onSelectSession(session.id);
-                  }}
-                  onDelete={() => onDeleteSession(session.id)}
-                />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </ScrollArea>
-      </SidebarContent>
-    </Sidebar>
+          <div className="relative group-data-[collapsible=icon]:hidden w-full">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search chats..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 h-8 bg-sidebar-accent/50 border-sidebar-border focus:bg-sidebar-accent text-sidebar-foreground placeholder:text-muted-foreground rounded-md"
+              suppressHydrationWarning={true}
+            />
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="p-0">
+          <ScrollArea className={cn("h-full", "group-data-[collapsible=icon]:hidden")}>
+            <SidebarMenu className="p-2">
+              {!isInitialized && (
+                  <SidebarMenuItem className="p-2 text-sm text-muted-foreground">Loading sessions...</SidebarMenuItem>
+              )}
+              {isInitialized && sessions.length === 0 && (
+                <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions yet. Start a new chat!</SidebarMenuItem>
+              )}
+               {isInitialized && sessions.length > 0 && filteredSessions.length === 0 && searchTerm && (
+                <SidebarMenuItem className="p-2 text-sm text-muted-foreground">No sessions match your search.</SidebarMenuItem>
+              )}
+              {isInitialized && filteredSessions.map((session) => (
+                <SidebarMenuItem key={session.id}>
+                  <SessionItem
+                    session={session}
+                    isActive={session.id === activeSessionId}
+                    onSelect={() => {
+                      onSelectSession(session.id);
+                    }}
+                    onDelete={() => onDeleteSession(session.id)}
+                  />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </ScrollArea>
+        </SidebarContent>
+      </Sidebar>
+    </TooltipProvider>
   );
 }
+
