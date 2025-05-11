@@ -44,10 +44,8 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
   };
 
   const handleExamplePromptClick = (promptText: string) => {
-    setInputValue(promptText);
-    // Optionally, auto-send the prompt:
-    // onSendMessage(promptText);
-    // setInputValue('');
+    onSendMessage(promptText.trim());
+    setInputValue(''); // Clear input after sending
   };
 
   // Show initial greeting and example prompts if not loading and there are no messages.
@@ -123,3 +121,4 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
     </div>
   );
 }
+
