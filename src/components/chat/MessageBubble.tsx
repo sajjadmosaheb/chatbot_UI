@@ -1,4 +1,3 @@
-
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -60,7 +59,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     const hasCodeBlocks = isBot && text.includes("```");
 
     if (isSingleCodeBlock || (hasCodeBlocks && !text.replace(/```[\s\S]*?```/g, '').trim())) { // If it's only code block(s)
-      const codeContent = extractCodeContent(text); // This might need adjustment if there are multiple blocks
+      const codeContent = extractCodeContent(text); 
       return (
         <div className="my-2 p-3 border border-dashed border-border rounded-lg bg-card shadow-sm text-card-foreground">
           <div className="flex justify-between items-center mb-2">
@@ -76,7 +75,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       );
     }
     
-    // For mixed content or plain text, render line by line, looking for ``` blocks
     if (hasCodeBlocks) {
       const parts = text.split(/(```[\s\S]*?```)/g);
       return parts.map((part, index) => {
@@ -96,9 +94,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </div>
           );
         }
-        // Render text parts, ensuring newlines are respected
         return part.split('\n').map((line, lineIdx) => (
-          <p key={`${index}-${lineIdx}`} className="text-sm break-words leading-relaxed my-0 py-0">{line || <>&nbsp;</>}{/* Render empty line or non-breaking space for structure */}</p>
+          <p key={`${index}-${lineIdx}`} className="text-sm break-words leading-relaxed my-0 py-0">{line || <>&nbsp;</>}</p>
         ));
       }).flat();
     }
@@ -117,12 +114,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     );
   }
 
-  const ActionButtons = () => (
-    <div className="flex items-center space-x-1 opacity-100 group-hover:opacity-100 transition-opacity duration-150">
+  const ActionButtons = ({ isUserMsg }: { isUserMsg: boolean }) => (
+    <div className={cn("flex items-center space-x-1 opacity-100 group-hover:opacity-100 transition-opacity duration-150", isUserMsg ? "ml-2" : "mr-2")}>
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(message.text)} aria-label="Copy message">
-        <Copy className={cn("h-4 w-4", isUser ? "text-primary-foreground/80 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground")} />
+        <Copy className={cn("h-4 w-4", isUserMsg ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground hover:text-foreground")} />
       </Button>
-      {isBot && (
+      {!isUserMsg && (
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setLiked(!liked)} aria-label="Like message">
           <ThumbsUp className={cn("h-4 w-4", liked ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary")} />
         </Button>
@@ -131,41 +128,30 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   );
 
   return (
-    <div className={cn('flex my-2 group', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex flex-col my-2 group', isUser ? 'items-end' : 'items-start')}>
       <div
         className={cn(
-          'max-w-[75%] p-3 flex flex-col', 
+          'max-w-[75%] p-3', 
           isUser 
             ? 'bg-primary text-primary-foreground shadow-md rounded-xl rounded-br-none' 
             : 'bg-transparent text-foreground shadow-none' // Bot messages have no frame/bubble
         )}
       >
-        <div className="mb-1">
-          {renderMessageText(message.text)}
-        </div>
-        
-        <div className={cn(
-            "flex items-end w-full mt-1", // items-end to align timestamp and buttons properly
-            isUser ? "justify-end" : "justify-start" // Bot actions are on the left of timestamp
+        {renderMessageText(message.text)}
+      </div>
+      <div className={cn(
+          "flex items-center mt-1",
+          isUser ? "justify-end" : "justify-start w-full max-w-[75%]" 
+        )}>
+          {isBot && <ActionButtons isUserMsg={false} />}
+          <p className={cn(
+            "text-xs",
+            isUser ? "text-muted-foreground mr-2" : "text-muted-foreground"
           )}>
-          {isBot && (
-             <div className="flex items-center mr-2"> {/* Group buttons and timestamp for bot */}
-                <ActionButtons />
-             </div>
-          )}
-           <p className={cn(
-              "text-xs",
-              isUser ? "text-primary-foreground/70 ml-2" : "text-muted-foreground"
-            )}>
             {format(new Date(message.timestamp), 'p')}
           </p>
-          {isUser && (
-             <div className="flex items-center ml-2"> {/* User buttons to the left of timestamp */}
-                <ActionButtons />
-             </div>
-          )}
+          {isUser && <ActionButtons isUserMsg={true} />}
         </div>
-      </div>
     </div>
   );
 }
