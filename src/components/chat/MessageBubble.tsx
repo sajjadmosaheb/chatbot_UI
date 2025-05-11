@@ -1,3 +1,4 @@
+
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -44,17 +45,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         return lines.join('\n').trim();
       }
     }
-    // If no clear ```blocks```, or only one ```, assume the part after a single ``` might be code.
-    // This is a fallback, proper markdown parsing is better.
     const singleMarker = text.indexOf("```");
     if (singleMarker !== -1 && text.lastIndexOf("```") === singleMarker) {
         return text.substring(singleMarker + 3).trim();
     }
-    return text; // Return original if no clear code block or if it's not primarily a code block
+    return text; 
   };
   
   const renderMessageText = (text: string) => {
-    // Check if the message IS primarily a code block
     const isCodeBlockMessage = isBot && text.startsWith("```") && text.endsWith("```") && text.indexOf("```") !== text.lastIndexOf("```");
 
     if (isCodeBlockMessage) {
@@ -73,8 +71,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
       );
     }
-    // For regular text, or text with inline code, just render it.
-    // Proper markdown rendering for inline code, bold, etc. would require a library.
     return <p className="text-sm break-words leading-relaxed">{text}</p>;
   };
 
@@ -91,39 +87,54 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const ActionButtons = () => (
     <div className={cn(
-      "absolute top-1 right-1 z-10 flex opacity-0 group-hover:opacity-100 transition-opacity duration-150 rounded-md p-0.5 bg-transparent" // Colorless button container
+      "flex items-center space-x-1", 
       )}>
-      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(message.text)} aria-label="Copy message">
-        <Copy className={cn("h-3 w-3", isUser ? "text-primary-foreground/80 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground")} />
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(message.text)} aria-label="Copy message">
+        <Copy className={cn("h-4 w-4", isUser ? "text-primary-foreground/80 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground")} />
       </Button>
       {isBot && (
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setLiked(!liked)} aria-label="Like message">
-          <ThumbsUp className={cn("h-3 w-3", liked ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary")} />
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setLiked(!liked)} aria-label="Like message">
+          <ThumbsUp className={cn("h-4 w-4", liked ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary")} />
         </Button>
       )}
     </div>
   );
 
   return (
-    <div className={cn('flex my-2 group relative', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex my-2', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[75%] p-3 rounded-xl', // All messages get rounded-xl
+          'max-w-[75%] p-3 rounded-xl flex flex-col', 
           isUser 
             ? 'bg-primary text-primary-foreground shadow-md rounded-br-none' 
-            : 'bg-transparent text-foreground shadow-none', // Bot message: frameless
-           'relative' 
+            : 'bg-transparent text-foreground shadow-none'
         )}
       >
-        {renderMessageText(message.text)}
-        <ActionButtons />
+        <div className="mb-1">
+          {renderMessageText(message.text)}
+        </div>
         
-        <p className={cn(
-            "text-xs mt-1",
-            isUser ? "text-primary-foreground/70 text-right" : "text-muted-foreground text-left"
+        <div className={cn(
+            "flex items-center w-full mt-1",
+            isUser ? "justify-end" : "justify-between" 
           )}>
-          {format(new Date(message.timestamp), 'p')}
-        </p>
+          {!isUser && ( 
+            <>
+              <p className="text-xs text-muted-foreground mr-2">
+                {format(new Date(message.timestamp), 'p')}
+              </p>
+              <ActionButtons /> 
+            </>
+          )}
+          {isUser && ( 
+            <>
+              <ActionButtons />
+              <p className="text-xs text-primary-foreground/70 ml-2">
+                {format(new Date(message.timestamp), 'p')}
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
