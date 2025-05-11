@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, PanelLeft } from 'lucide-react'; // Added PanelLeft for explicit use if needed, though SidebarTrigger handles it
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState } from 'react'; 
 import { cn } from '@/lib/utils';
@@ -38,7 +38,7 @@ export function SessionHistoryPanel({
   isInitialized
 }: SessionHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { state: sidebarState, isMobile, openMobile: isSidebarOpenMobile } = useSidebar();
+  const { state: sidebarState, isMobile, openMobile: isSidebarOpenMobile, toggleSidebar } = useSidebar();
 
   const filteredSessions = searchTerm.trim() === '' 
     ? sessions 
@@ -59,7 +59,7 @@ export function SessionHistoryPanel({
     if (isMobile) {
       return isSidebarOpenMobile ? "Close sidebar" : "Open sidebar";
     }
-    return sidebarState === 'expanded' ? "Close sidebar" : "Open sidebar";
+    return sidebarState === 'expanded' ? "Collapse sidebar" : "Expand sidebar";
   };
   
   const getNewConversationTooltipText = () => "New Conversation";
@@ -68,36 +68,41 @@ export function SessionHistoryPanel({
   return (
     <TooltipProvider>
       <Sidebar side="left" variant="sidebar" collapsible="icon">
-        <SidebarHeader className="flex flex-col p-3 border-b border-sidebar-border">
-          <div className="flex items-center justify-between w-full mb-2">
+        <SidebarHeader className="flex flex-col p-3 group-data-[collapsible=icon]:p-0 border-b border-sidebar-border">
+          <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mb-0 mb-2">
             <h2 className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">Academix</h2>
-            <div className="flex items-center gap-1">
+            {/* Icon container */}
+            <div className="flex items-center group-data-[collapsible=icon]:gap-0 gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)/2)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:text-sidebar-accent-foreground"
                     onClick={onCreateNewSession}
-                    aria-label="New Conversation"
+                    aria-label={getNewConversationTooltipText()}
                   >
-                    <PlusCircle className="h-5 w-5" />
+                    {/* SVG icon size is managed by Button's default [&_svg] styles or explicit sizing here */}
+                    <PlusCircle className="h-5 w-5 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" align="center">
+                <TooltipContent sideOffset={10} side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
                   <p>{getNewConversationTooltipText()}</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <SidebarTrigger className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground" /> 
+                  {/* SidebarTrigger is a Button, so it can also take these classes */}
+                  {/* The PanelLeft icon inside SidebarTrigger will respect Button's SVG sizing rules */}
+                  <SidebarTrigger className="h-8 w-8 group-data-[collapsible=icon]:h-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)/2)] group-data-[collapsible=icon]:rounded-none text-sidebar-foreground hover:text-sidebar-accent-foreground" />
                 </TooltipTrigger>
-                <TooltipContent side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
+                <TooltipContent sideOffset={10} side={isMobile ? "bottom" : (sidebarState === 'expanded' ? "bottom" : "right")} align="center">
                    <p>{getSidebarToggleTooltipText()}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
           </div>
+          {/* Search Input (hidden when collapsed) */}
           <div className="relative group-data-[collapsible=icon]:hidden w-full">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -136,6 +141,11 @@ export function SessionHistoryPanel({
               ))}
             </SidebarMenu>
           </ScrollArea>
+           {/* Collapsed state icon-only menu items (optional, if needed for other actions) */}
+           <SidebarMenu className={cn("p-2", "hidden group-data-[collapsible=icon]:flex flex-col items-center")}>
+            {/* Example of how other icons could be shown when collapsed, if SidebarContent were to show them */}
+            {/* This is not strictly required by the current user request but shows how it could be structured */}
+           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
     </TooltipProvider>
