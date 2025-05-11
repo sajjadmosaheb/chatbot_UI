@@ -10,12 +10,14 @@ import { Send, PanelLeft, Paperclip } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { useSidebar } from '@/components/ui/sidebar'; 
 import { cn } from '@/lib/utils';
-import { InitialGreeting } from './InitialGreeting'; // New import
+import { InitialGreeting } from './InitialGreeting';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ExamplePromptsGrid } from './ExamplePromptsGrid';
 
 interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (text: string) => void;
-  currentSessionTitle: string;
+  currentSessionTitle: string; // Kept for potential future use, but not displayed
   isLoading: boolean; 
 }
 
@@ -41,49 +43,57 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
     }
   };
 
-  const showSpecialGreeting = !isLoading && messages.length === 1 && messages[0].sender === 'bot' && messages[0].text === "Hello! How can I help you today?";
+  const handleExamplePromptClick = (promptText: string) => {
+    setInputValue(promptText);
+    // Optionally, auto-send the prompt:
+    // onSendMessage(promptText);
+    // setInputValue('');
+  };
 
-  // Input is centered if loading, or if it's the special greeting case (initial bot message only)
-  const isInputCentered = isLoading || showSpecialGreeting;
-
-  const inputWrapperClass = cn(
-    "p-4 border-t bg-background",
-    isInputCentered
-      ? "absolute bottom-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] sm:w-full max-w-2xl px-4" // Centered input with max-width
-      : "sticky bottom-0" // Input at bottom for ongoing chats
-  );
+  // Show special greeting and example prompts if not loading, it's the initial bot message, and no user messages yet.
+  const isNewChatScreen = !isLoading && messages.length === 1 && messages[0].sender === 'bot' && messages[0].text === "Hello! How can I help you today?";
 
   return (
     <div className="flex flex-col h-full bg-background relative">
-      <header className="p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10">
-        {isMobile && ( 
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
-            <PanelLeft className="h-5 w-5" />
-          </Button>
-        )}
-        <h1 className="text-xl font-semibold text-foreground truncate flex-1">{currentSessionTitle}</h1>
+      <header className="p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10 h-16">
+        <div className="flex items-center">
+          {isMobile && ( 
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          )}
+           {/* Placeholder for potential future elements or to balance the ThemeToggle */}
+          <div className="w-8 h-8 md:w-0 md:h-0"></div>
+        </div>
+        <ThemeToggle />
       </header>
 
-      {showSpecialGreeting ? (
-        <div className="flex-grow flex"> {/* Container for InitialGreeting to take full space */}
-          <InitialGreeting />
+      {isNewChatScreen ? (
+        <div className="flex-grow flex flex-col items-center justify-start p-4 pt-16 space-y-12 overflow-y-auto">
+          <InitialGreeting username="sajjad" />
+          <ExamplePromptsGrid onPromptClick={handleExamplePromptClick} />
         </div>
       ) : (
         <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-20"> {/* pb-20 for when input is at bottom */}
-            {isLoading && <p className="text-center text-muted-foreground">Loading chat...</p>}
+          <div className={cn("space-y-4", messages.length > 0 ? "pb-[calc(4.5rem+1rem)]" : "pb-4")}> {/* Add padding-bottom for input area */}
+            {isLoading && !isNewChatScreen && <p className="text-center text-muted-foreground">Loading chat...</p>}
             {!isLoading && messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
+              // Do not render the initial "Hello! How can I help you today?" message if we are showing the new chat screen
+              (isNewChatScreen && msg.text === "Hello! How can I help you today!" && msg.sender === "bot") 
+              ? null 
+              : <MessageBubble key={msg.id} message={msg} />
             ))}
           </div>
         </ScrollArea>
       )}
 
-      <div className={inputWrapperClass}>
+      <div className={cn(
+        "p-4 border-t bg-background w-full max-w-3xl mx-auto",
+        "sticky bottom-0" 
+      )}>
         <form onSubmit={handleSendMessage} className="w-full">
-          <div className="flex items-center gap-2 max-w-full mx-auto">
-            <div className="relative flex-grow flex items-center">
-              <Button
+          <div className="relative flex items-center gap-2">
+             <Button
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -93,23 +103,22 @@ export function ChatInterface({ messages, onSendMessage, currentSessionTitle, is
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
-              <Input
-                type="text"
-                placeholder="Type your message..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="flex-grow bg-card border-input focus:ring-primary rounded-xl pl-10 pr-3 py-2 w-full" 
-                disabled={isLoading}
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="Ask Academix..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="flex-grow bg-card border-input focus:ring-primary rounded-full py-3 pl-12 pr-12 text-base" 
+              disabled={isLoading}
+            />
             <Button
               type="submit"
               size="icon"
-              className="bg-primary hover:bg-primary/90 rounded-xl text-primary-foreground" 
+              className="bg-primary hover:bg-primary/90 rounded-full text-primary-foreground absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" 
               disabled={isLoading || !inputValue.trim()}
               aria-label="Send message"
             >
-              <Send className="h-5 w-5" />
+              <Send className="h-4 w-4" />
             </Button>
           </div>
         </form>
